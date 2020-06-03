@@ -53,7 +53,7 @@ const GradeType = new GraphQLObjectType({
         id: { type: GraphQLNonNull(GraphQLInt) },
         courseId: { type: GraphQLNonNull(GraphQLInt) },
         studentId: { type: GraphQLNonNull(GraphQLInt) },
-        grade: { type: GraphQLNonNull(GraphQLString) },
+        grade: { type: GraphQLNonNull(GraphQLInt) },
         course: {
             type: CourseType,
             resolve: (grade) =>

@@ -63,74 +63,101 @@ const RootMutationType = new GraphQLObjectType({
             args: {
                 courseId: { type: GraphQLNonNull(GraphQLInt) },
                 studentId: { type: GraphQLNonNull(GraphQLInt) },
-                grade: { type: GraphQLNonNull(GraphQLString) },
+                grade: { type: GraphQLNonNull(GraphQLInt) },
             },
             resolve: (parent, args) => {
-                course = courses.find((course) => course.id === args.courseId)
                 student = students.find((student) => student.id === args.studentId)
-                if (course && student) {
-                    const grade = {
-                        id: grades.length + 1,
-                        courseId: args.courseId,
-                        studentId: args.studentId,
-                        grade: args.grade,
-                    };
-                    grades.push(grade);
-                    return grade;
+                if (student) {
+                    if (student.courseId === args.courseId) {
+                        const grade = {
+                            id: grades.length + 1,
+                            courseId: args.courseId,
+                            studentId: args.studentId,
+                            grade: args.grade,
+                        };
+                        grades.push(grade);
+                        return grade;
+                    } else {
+                        throw new GraphQLError(`El estudiante con id: ${args.studentId} no se encuentra en el curso con id: ${args.courseId}, por lo tanto no se puede asignar una nota`)
+                    }
                 } else {
-                    throw new GraphQLError(`No se encontro un course con id: ${args.courseId} o un student con id: ${args.studentId}`)
+                    throw new GraphQLError(`No se encontro un estudiante con id: ${args.studentId}`)
                 }
             },
         },
         removeCourse: {
-            type: CourseType,
+            type: GraphQLString,
             description: "remove a course",
             args: {
                 id: { type: GraphQLNonNull(GraphQLInt) },
             },
             resolve: (parent, args) => {
-                const gradesCourse = grades.filter(
-                    (grade) => grade.courseId === args.id
-                );
-                const studentsCourse = students.filter(
-                    (student) => student.courseId === args.id
-                );
-                if (gradesCourse.length == 0 && studentsCourse == 0) {
-                    _.remove(courses, (course) => course.id === args.id);
+                const courseDelete = courses.find( course => course.id === args.id);
+                if (courseDelete) {
+                    const gradesCourse = grades.filter(
+                        (grade) => grade.courseId === courseDelete.id
+                    );
+                    const studentsCourse = students.filter(
+                        (student) => student.courseId === courseDelete.id
+                    );
+                    if (gradesCourse.length == 0 && studentsCourse == 0) {
+                        _.remove(courses, (course) => course.id === courseDelete.id);
+                        return 'Curso eliminado satisfactoriamente'
+                    } else {
+                        throw new GraphQLError(
+                            "No se puede eliminar course porque tiene notas y estudiantes"
+                        );
+                    }
                 } else {
                     throw new GraphQLError(
-                        "No se puede eliminar course porque tiene grades y students"
+                        "No se encontro el curso"
                     );
                 }
             },
         },
         removeStudent: {
-            type: StudentType,
+            type: GraphQLString,
             description: "remove a student",
             args: {
                 id: { type: GraphQLNonNull(GraphQLInt) },
             },
             resolve: (parent, args) => {
-                const gradesStudent = grades.filter(
-                    (grade) => grade.studentId === args.id
-                );
-                if (gradesStudent.length == 0) {
-                    _.remove(students, (student) => student.id === args.id);
+                const studentDelete = students.find( student => student.id === args.id);
+                if (studentDelete) {
+                    const gradesStudent = grades.filter(
+                        (grade) => grade.studentId === studentDelete.id
+                    );
+                    if (gradesStudent.length == 0) {
+                        _.remove(students, (student) => student.id === args.id);
+                        return 'Estudiante eliminado satisfactoriamente'
+                    } else {
+                        throw new GraphQLError(
+                            "No se puede eliminar estudiante porque tiene notas"
+                        );
+                    }
                 } else {
                     throw new GraphQLError(
-                        "No se puede eliminar student porque tiene grades"
+                        "No se encontro el estudiante"
                     );
                 }
             },
         },
         removeGrade: {
-            type: GradeType,
+            type: GraphQLString,
             description: "remove a grade",
             args: {
                 id: { type: GraphQLNonNull(GraphQLInt) },
             },
             resolve: (parent, args) => {
-                _.remove(grades, (grade) => grade.id === args.id);
+                const gradeDelete = grades.find( grade => grade.id === args.id);
+                if (gradeDelete) {
+                    _.remove(grades, (grade) => grade.id === gradeDelete.id);
+                    return 'Nota eliminada satisfactoriamente'
+                } else {
+                    throw new GraphQLError(
+                        "No se encontro el nota"
+                    );
+                }
             },
         },
     }),
